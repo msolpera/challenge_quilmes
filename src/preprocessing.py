@@ -1,21 +1,6 @@
 import pandas as pd
 import numpy as np
 
-def procesar_variable_temporal(df):
-    """
-    Convierte aniomes y crea features temporales útiles
-    """
-    df = df.copy()
-    
-    # Conversión a datetime
-    df['fecha'] = pd.to_datetime(df['aniomes'], format='%Y%m')
-    
-    # Features cíclicas 
-    df['mes_sin'] = np.sin(2 * np.pi * df['mes'] / 12)
-    df['mes_cos'] = np.cos(2 * np.pi * df['mes'] / 12)
-    
-    return df
-
 def estandarizar_categorias(df, columna, mapeo):
     """
     Mapeo y estandarización a una columna categórica.
