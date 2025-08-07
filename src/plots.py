@@ -128,3 +128,49 @@ def plot_countplot(df, category_col, hue=None):
                         ha='center', va='bottom', fontsize=9, color='black', rotation=0)
     plt.tight_layout()
     plt.show()
+
+
+def plot_series_mensuales_subplots(df, date_col='fecha', agg='sum', exclude_cols=None):
+    """
+    Genera un gráfico con subplots para las series temporales mensuales 
+    de todas las columnas numéricas del DataFrame.
+
+    Args:
+        df (pd.DataFrame): DataFrame con datos.
+        date_col (str): Nombre de la columna de fecha.
+        agg (str): Método de agregación ('sum', 'mean', 'median', etc.).
+        exclude_cols (list): Lista de columnas numéricas a excluir.
+
+    Returns:
+        None. Muestra el gráfico.
+    """
+    # Asegurar que la columna fecha esté en datetime
+    df[date_col] = pd.to_datetime(df[date_col])
+
+    # Seleccionar columnas numéricas
+    numeric_cols = df.select_dtypes(include='number').columns.tolist()
+
+    # Excluir columnas no deseadas
+    if exclude_cols:
+        numeric_cols = [col for col in numeric_cols if col not in exclude_cols]
+
+    # Crear figura con subplots
+    n_cols = 2  # columnas en la cuadrícula
+    n_rows = (len(numeric_cols) + n_cols - 1) // n_cols
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(14, n_rows * 4), sharex=True)
+
+    axes = axes.flatten()
+
+    # Graficar cada columna
+    for i, col in enumerate(numeric_cols):
+        serie = df.groupby(date_col)[col].agg(agg).sort_index()
+        axes[i].plot(serie.index, serie.values, marker='o')
+        axes[i].set_title(f'{agg.capitalize()} mensual de {col}')
+        axes[i].grid(True)
+
+    # Eliminar ejes vacíos si sobran
+    for j in range(i + 1, len(axes)):
+        fig.delaxes(axes[j])
+
+    fig.tight_layout()
+    plt.show()

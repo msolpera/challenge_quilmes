@@ -97,22 +97,21 @@ def replace_placeholders(df, placeholders=[-999999, 999999]):
     df_reemplazado = df_reemplazado.replace(placeholders, np.nan)
     return df_reemplazado
 
-def eliminar_negativos(df, columnas):
+def negativos_significativos(df, columnas, umbral_significativo=-0.1):
     """
-    Reemplaza valores negativos por NaN en las columnas especificadas.
+    Reemplaza valores negativos no significativos por 0 en las columnas especificadas.
 
     Args:
     df (pd.DataFrame): DataFrame.
     columnas (list): Lista de nombres de columnas a procesar.
 
     Returns:
-    pd.DataFrame: DataFrame con valores negativos reemplazados por NaN.
+    pd.DataFrame: DataFrame con valores negativos no significativos reemplazados por 0.
     """
-    df_sin_negativos = df.copy()
+    df_sig = df.copy()
     for col in columnas:
-        if col in df_sin_negativos.columns:
-            df_sin_negativos.loc[df_sin_negativos[col] < 0, col] = np.nan
-    return df_sin_negativos
+        df_sig.loc[(df_sig[col] < 0) & (df_sig[col] >= umbral_significativo), col] = 0
+    return df_sig
 
 
 def preprocesamiento_pipeline(df, target, cols_numericas):
@@ -153,10 +152,7 @@ def preprocesamiento_pipeline(df, target, cols_numericas):
     df = df.dropna(subset=[target])
     
     # Imputar valores negativos y crear columnas indicadoras
-    for col in cols_numericas:
-        df[col + '_negativa'] = df[col] < 0
-        mediana = df.loc[df[col] >= 0, col].median()
-        df.loc[df[col] < 0, col] = mediana
+    df = negativos_significativos(df, cols_numericas)
     
     # Imputar NaN en ventas como ceros
     df = df.fillna(0)
