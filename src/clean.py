@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 
+
 def estandarizar_categorias(df, columna, mapeo):
     """
     Mapeo y estandarización a una columna categórica.
@@ -114,10 +115,10 @@ def negativos_significativos(df, columnas, umbral_significativo=-0.1):
     return df_sig
 
 
-def preprocesamiento_pipeline(df, target, cols_numericas):
+def cleaning_pipeline(df, target, cols_numericas):
     
     """
-    Pipeline de preprocesamiento de datos.
+    Pipeline de limpieza de datos.
     Args:
         df (pd.DataFrame): DataFrame de entrada.
         target (str): Nombre de la columna objetivo.
@@ -151,10 +152,12 @@ def preprocesamiento_pipeline(df, target, cols_numericas):
     # Eliminar filas con NaN en el target
     df = df.dropna(subset=[target])
     
-    # Imputar valores negativos y crear columnas indicadoras
+    # Imputar valores negativos significativos 
     df = negativos_significativos(df, cols_numericas)
     
     # Imputar NaN en ventas como ceros
     df = df.fillna(0)
     
     return df
+
+

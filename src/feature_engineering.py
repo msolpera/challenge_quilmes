@@ -33,7 +33,7 @@ def get_features(df):
         df.groupby('cliente_id')['cantidad_productos_total_negocios_vendidos_mes'].transform('mean')) # Promedio de productos por compra (cliente)
     
     df_new['promedio_venta_total'] = (
-        df.groupby('cliente_id')['venta_total_negocio_mes'].transform('mean')) # Promedio de venta total por mes (cliente)
+        df.groupby('cliente_id')['venta_total_negocios_mes'].transform('mean')) # Promedio de venta total por mes (cliente)
 
     return df_new
 
