@@ -155,8 +155,6 @@ def cleaning_pipeline(df, target, cols_numericas):
     # Imputar valores negativos significativos 
     df = negativos_significativos(df, cols_numericas)
     
-    # Imputar NaN en ventas como ceros
-    df = df.fillna(0)
     
     return df
 

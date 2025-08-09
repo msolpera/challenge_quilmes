@@ -174,3 +174,25 @@ def plot_series_mensuales_subplots(df, date_col='fecha', agg='sum', exclude_cols
 
     fig.tight_layout()
     plt.show()
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+def plot_all_vs_target(df, target, features=None, hue=None, cols=2, figsize=(14, 5)):
+    """
+    Grafica subplots de todas las variables numéricas vs el target.
+    """
+    if features is None:
+        features = [col for col in df.select_dtypes(include='number').columns if col != target]
+    rows = (len(features) + cols - 1) // cols
+    fig, axs = plt.subplots(rows, cols, figsize=(figsize[0], rows * figsize[1]))
+    axs = axs.flatten()
+    for i, feature in enumerate(features):
+        sns.scatterplot(x=feature, y=target, data=df, hue=hue, ax=axs[i])
+        axs[i].set_title(f'{feature} vs {target}')
+    # Oculta los ejes vacíos si hay
+    for j in range(i+1, len(axs)):
+        axs[j].set_visible(False)
+    plt.tight_layout()
+    plt.show()
+
