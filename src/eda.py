@@ -123,19 +123,29 @@ def check_nulls_nans(df):
 
 
 
-def inconsistencias_ventas(df):
-    suma_venta_negocio = (
-    df['venta_negocio1_mes'] +
-    df['venta_negocio2_mes'] +
-    df['venta_negocio3_mes'] +
-    df['venta_negocio4_mes']
+def resumen_visitas_mensuales(df, fecha_col='fecha', cliente_col='cliente_id'):
+    resumen = (
+        df.groupby(fecha_col)[cliente_col]
+          .agg(
+              clientes_unicos='nunique',
+              total_registros='count'
+          )
+          .reset_index()
     )
 
-    tolerancia = 1.01  # Tolerancia del 1%
-    df_inconsistentes = df[
-        df['venta_total_negocios_mes'] + tolerancia < suma_venta_negocio.round(2)
-        ]
-    print(f"\nCantidad de registros con inconsistencias en ventas: {len(df_inconsistentes)}")
-    print("Registros inconsistentes:")
-    print(df_inconsistentes[['cliente_id', 'venta_total_negocios_mes', 'venta_negocio1_mes',
-                             'venta_negocio2_mes', 'venta_negocio3_mes', 'venta_negocio4_mes']])
+    # Detectar clientes duplicados por mes
+    duplicados = (
+        df.groupby([fecha_col, cliente_col])
+          .size()
+          .reset_index(name='conteo')
+          .query('conteo > 1')
+          .groupby(fecha_col)[cliente_col]
+          .apply(list)
+          .reset_index(name='clientes_duplicados')
+    )
+
+    # Unir info de duplicados al resumen
+    resumen = resumen.merge(duplicados, on=fecha_col, how='left')
+    resumen['clientes_duplicados'] = resumen['clientes_duplicados'].apply(lambda x: x if isinstance(x, list) else [])
+
+    return resumen

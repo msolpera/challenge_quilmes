@@ -98,7 +98,7 @@ def replace_placeholders(df, placeholders=[-999999, 999999]):
     df_reemplazado = df_reemplazado.replace(placeholders, np.nan)
     return df_reemplazado
 
-def negativos_significativos(df, columnas, umbral_significativo=-0.1):
+def negativos_nosignificativos(df, columnas, umbral_significativo=-0.1):
     """
     Reemplaza valores negativos no significativos por 0 en las columnas especificadas.
 
@@ -111,7 +111,7 @@ def negativos_significativos(df, columnas, umbral_significativo=-0.1):
     """
     df_sig = df.copy()
     for col in columnas:
-        df_sig.loc[(df_sig[col] < 0) & (df_sig[col] >= umbral_significativo), col] = 0
+        df_sig.loc[(df_sig[col] < 0) & (df_sig[col] > umbral_significativo), col] = 0
     return df_sig
 
 
@@ -130,6 +130,9 @@ def cleaning_pipeline(df, target, cols_numericas):
 
     # Drop duplicados
     df = df.drop_duplicates()
+
+    # Drop filas del mes 2024-04
+    df = df[df['aniomes']>202404]
 
     # Estandarizar variables categóricas
     mapeo_canal = {
@@ -152,10 +155,13 @@ def cleaning_pipeline(df, target, cols_numericas):
     # Eliminar filas con NaN en el target
     df = df.dropna(subset=[target])
     
-    # Imputar valores negativos significativos 
-    df = negativos_significativos(df, cols_numericas)
-    
-    
+    # Imputar valores negativos no significativos 
+    df = negativos_nosignificativos(df, cols_numericas)
+
+    # Agrupar clientes que se los visita más de una vez
+    cols_sum = df.columns.drop(['aniomes', 'cliente_id', 'fecha', 'canal', 'region'])
+    df = df.groupby(['aniomes', 'cliente_id', 'fecha', 'canal', 'region'])[cols_sum].sum().reset_index()
+
     return df
 
 

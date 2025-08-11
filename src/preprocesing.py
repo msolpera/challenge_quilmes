@@ -9,8 +9,8 @@ from scipy.stats import skew
 
 
 
-def pipeline_preprocesamiento_rdmforest(numeric_cols, categorical_cols, 
-                                     categorical_strategy='onehot', except_features=None):
+def pipeline_preprocesamiento_lr(numeric_cols, categorical_cols, 
+                                     categorical_strategy='onehot', except_features=None, fit=False, X=None, y=None):
     """
     Pipeline de preprocesamiento para variables numéricas y categóricas.
 
@@ -24,10 +24,10 @@ def pipeline_preprocesamiento_rdmforest(numeric_cols, categorical_cols,
     """
     numeric_cols = [col for col in numeric_cols if col not in (except_features or [])]
 
-    # Features numéricas: imputar + transformar + escalar
-    numeric_pipeline = Pipeline([
-        ('imputer', SimpleImputer(strategy='median')),
-        ('scaler', RobustScaler())
+    # Features numéricas: imputar + transformar 
+    num_pipeline = Pipeline([
+    ('imputer', SimpleImputer(strategy='median')),
+    ('scaler', RobustScaler())
     ])
 
     # Features categóricas: imputar + codificar
@@ -48,47 +48,38 @@ def pipeline_preprocesamiento_rdmforest(numeric_cols, categorical_cols,
 
     # Combinador de columnas
     preprocessor = ColumnTransformer([
-        ('num', numeric_pipeline, numeric_cols),
+        ('num', num_pipeline, numeric_cols),
         ('cat', categorical_pipeline, categorical_cols)
     ])
 
+    if fit and X is not None and y is not None:
+        preprocessor.fit(X, y)
+
     return preprocessor
 
 
-def pipeline_preprocesamiento_catboost(numeric_cols, categorical_cols, except_features=None):
-    """
-    Pipeline de preprocesamiento para CatBoost.
-    Args:
-        numeric_cols (list): Lista de columnas numéricas.
-        categorical_cols (list): Lista de columnas categóricas.
-        except_features (list, optional): Columnas a excluir del preprocesamiento. Defaults to None.
-        fit (bool, optional): Si True, ajusta el preprocesador a los datos. Defaults to False.
-        X (pd.DataFrame, optional): Datos de entrada para ajustar el preprocesador. Defaults to None.
-        y (pd.Series, optional): Etiquetas para ajustar el preprocesador. Defaults to None.
-        Returns:    
-        sklearn Pipeline: Pipeline de preprocesamiento."""
-    if except_features is None:
-        except_features = []
-
-    numeric_cols = [col for col in numeric_cols if col not in except_features]
-
-    num_pipeline = Pipeline([
-        ('imputer', SimpleImputer(strategy='median')),
-        ('scaler', RobustScaler())
+def preprocessor_cb(cat_features, num_features, fit=False, X=None, y=None):
+    # Para numéricas: imputación por mediana
+    num_prepro = Pipeline([
+        ("imputation_none", SimpleImputer(missing_values=np.nan, strategy="median", add_indicator=True))
     ])
-
-    cat_pipeline = Pipeline([
-        ('imputer', SimpleImputer(strategy='constant', fill_value='NA'))
+    
+    # Para categóricas: sin indicadores extra
+    cat_prepro = Pipeline([
+        ("imputation", SimpleImputer(missing_values=np.nan,
+                                              strategy='constant',
+             fill_value='NA', add_indicator=True))
     ])
-
     feature_eng = ColumnTransformer([
-        ('cat', cat_pipeline, categorical_cols),
-        ('num', num_pipeline, numeric_cols)
-    ], remainder='drop', verbose=False)
+        ("cat", cat_prepro, cat_features),
+        ("num", num_prepro, num_features),
+    ],
+    remainder="passthrough",  
+    verbose=False,
+    verbose_feature_names_out=True)
 
     preprocessor = Pipeline([("feature_eng", feature_eng)])
 
-
+    if fit and X is not None and y is not None:
+        preprocessor.fit(X, y)
     return preprocessor
-
-    

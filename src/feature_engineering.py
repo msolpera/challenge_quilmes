@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.pipeline import Pipeline
 import numpy as np
 
-def get_features(df):
+def features_eng(df):
     """
     Crea nuevas variables a partir de los datos existentes.
     Args:
@@ -14,46 +14,67 @@ def get_features(df):
     df_new = df.copy()
 
     # Features comerciales
-    df_new['productos_por_compra'] =\
-          (df_new['cantidad_productos_total_negocios_vendidos_mes'] / df_new['cantidad_compras_total_negocios_mes']).replace([np.inf, -np.inf], 0) #variedad de productos comprados por compra
+    den = df_new['cantidad_compras_total_negocios_mes']
+    mask_cero = den == 0
+    result = np.full(len(df_new), np.nan)
+    result[~mask_cero] = df_new.loc[~mask_cero, 'cantidad_productos_total_negocios_vendidos_mes'] / den[~mask_cero]
+    result[mask_cero] = 0
+    df_new['productos_por_compra'] = result
     
-    df_new['venta_promedio_x_compra'] =\
-          (df_new['venta_total_negocios_mes'] / df_new['cantidad_compras_total_negocios_mes']).replace([np.inf, -np.inf], 0)  # $/n_compras
+    # Para 'venta_promedio_x_compra'
+    den = df_new['cantidad_compras_total_negocios_mes']
+    mask_cero = den == 0
+    result = np.full(len(df_new), np.nan)
+    result[~mask_cero] = df_new.loc[~mask_cero, 'venta_total_negocios_mes'] / den[~mask_cero]
+    result[mask_cero] = 0
+    df_new['venta_promedio_x_compra'] = result
     
-    df_new['venta_por_heladera'] = (df_new['venta_total_negocios_mes'] / df_new['cantidad_heladeras']).replace([np.inf, -np.inf], 0)   # $/n_heladeras
-
-    df_new['freq_compra'] =( 1 / df_new['dias_entre_compras_total_negocios_mes'] ).replace([np.inf, -np.inf], 0) # frecuencia de compra (1/días entre compras)
-
-    for i in range(1,5):
-        df_new[f'ratio_neg{i}'] = (df_new[f'venta_negocio{i}_mes'] / df_new['venta_total_negocios_mes']).replace([np.inf, -np.inf], 0)  # ratio de venta por negocio
+    # Para 'venta_por_heladera'
+    den = df_new['cantidad_heladeras']
+    mask_cero = den == 0
+    result = np.full(len(df_new), np.nan)
+    result[~mask_cero] = df_new.loc[~mask_cero, 'venta_total_negocios_mes'] / den[~mask_cero]
+    result[mask_cero] = 0
+    df_new['venta_por_heladera'] = result
     
-
-    # Features temporales
-    df_new['fecha'] = pd.to_datetime(df['aniomes'], format='%Y%m')
-    df_new['month'] = df_new['fecha'].dt.month
-    df_new['mes_sin'] = np.sin(2 * np.pi * df_new['fecha'].dt.month / 12)
-    df_new['mes_cos'] = np.cos(2 * np.pi * df_new['fecha'].dt.month / 12)
-    df_new['is_first_month'] = (df_new['aniomes'] == 202404).astype('int')    # Primer mes registrado (valores faltantes debido a historial previo)
-
-    # Features que dependen del cliente
-    df_new['promedio_compras_cliente'] = df.groupby('cliente_id')['cantidad_compras_total_negocios_mes'].transform('mean') # Promedio de compras por mes del cliente
-
-    df_new['promedio_productos_cliente'] = (
-        df.groupby('cliente_id')['cantidad_productos_total_negocios_vendidos_mes'].transform('mean')) # Promedio de productos por compra (cliente)
+    # Para 'freq_compra' (1 / días_entre_compras_total_negocios_mes)
+    den = df_new['dias_entre_compras_total_negocios_mes']
+    mask_cero = den == 0
+    result = np.full(len(df_new), np.nan)
+    result[~mask_cero] = 1 / den[~mask_cero]
+    result[mask_cero] = 0
+    df_new['freq_compra'] = result
     
-    df_new['promedio_venta_total'] = (
-        df.groupby('cliente_id')['venta_total_negocios_mes'].transform('mean')) # Promedio de venta total por mes (cliente)
-    
+    # Para ratios negocio i
+    for i in range(1, 5):
+        den = np.abs(df_new['venta_total_negocios_mes'])
+        mask_cero = den == 0
+        result = np.full(len(df_new), np.nan)
+        result[~mask_cero] = df_new.loc[~mask_cero, f'venta_negocio{i}_mes'] / den[~mask_cero]
+        result[mask_cero] = 0
+        df_new[f'ratio_neg{i}'] = result
+
+    # suma de ventas == 0
+    suma_ventas = df_new[[f'venta_negocio{i}_mes' for i in range(1, 5)]].sum(axis=1) + df_new['venta_total_negocios_mes']
+    df_new['flag_suma_ventas_0'] = (suma_ventas == 0).astype(int)
 
     return df_new
 
 
-def special_clients(df, feature, quantile=.99):
+def agregar_flag_outlier(df, ventas_col='venta_total_negocios_mes', fecha_col='aniomes', quantil=0.99):
     """
+    Agrega una columna de flag para identificar outliers en las ventas.
+
     """
-    for feature in feature:
-        threshold = df[feature].quantile(quantile)
-        df[f'is_especial_{feature}'] = (df[feature]>threshold).astype(int)
+    df = df.copy()
+
+    umbrales = df.groupby(fecha_col)[ventas_col].quantile(quantil).to_dict()
+
+    def flag_outlier(row):
+        umbral_mes = umbrales.get(row[fecha_col], 0)
+        return int(row[ventas_col] > umbral_mes)
+    
+    df['flag_outlier'] = df.apply(flag_outlier, axis=1)
     return df
 
 def log_transform(df, feature):
@@ -82,7 +103,5 @@ def get_cat_num_features(X_train):
     print(f'{len(num_features + cat_features)} variables en total')
 
     return cat_features, num_features
-
-
 
 

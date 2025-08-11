@@ -2,6 +2,7 @@ from scipy import stats
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
+import numpy as np
 
 def analisis_completo_columnas(df):
     resumen = []
@@ -63,3 +64,36 @@ def high_correlation(df):
     print("Pares de variables altamente correlacionadas:")
     for pair in high_corr_pairs:
         print(f"{pair[0]} - {pair[1]}: {pair[2]:.3f}")
+
+
+def agrupar_onehot_importance(feat_importance_df, prefijos_categoricos):
+    df = feat_importance_df.copy()
+
+    grupos = []
+    df_restante = df.copy()
+
+    for prefijo in prefijos_categoricos:
+        mask = df_restante['feature'].str.startswith(prefijo)
+        suma = df_restante.loc[mask, 'importance'].sum()
+        nombre_grupo = prefijo.rstrip('_')  
+        grupos.append({'feature': nombre_grupo, 'importance': suma})
+        # Eliminar esas filas para no duplicar
+        df_restante = df_restante.loc[~mask]
+
+    # Crear df con grupos sumados
+    df_grupos = pd.DataFrame(grupos)
+
+    # Concatenar los que quedaron (no categóricos) con los grupos sumados
+    df_final = pd.concat([df_restante, df_grupos], ignore_index=True)
+
+    # Ordenar por importancia descendente
+    df_final = df_final.sort_values('importance', ascending=False).reset_index(drop=True)
+
+    return df_final
+
+
+
+def error_ponderado_negocio(y_true, y_pred, pesos):
+    errores = np.abs(y_true - y_pred)
+    error_ponderado = np.sum(pesos * errores) / np.sum(pesos)
+    return error_ponderado

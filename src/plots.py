@@ -24,7 +24,7 @@ def plot_histogram(df, column, bins=30, title=None, log=False, kde=True):
     plt.xlabel(column)
     plt.ylabel("Frequency")
     if log:
-        plt.xscale('log')
+        plt.yscale('log')
     plt.show()
 
 def plot_feature_distributions(df, bins=30, cols=2, clip_outliers=True,
@@ -61,12 +61,10 @@ def plot_feature_distributions(df, bins=30, cols=2, clip_outliers=True,
     axes_num = axes_num.flatten()
 
     for i, feature in enumerate(numeric_features):
-        sns.histplot(data=df_plot, x=feature, bins=bins,
-                     kde=True, element='step', ax=axes_num[i])
+        sns.histplot(df_plot[feature], bins=bins, kde=False, ax=axes_num[i])
         axes_num[i].set_title(f"Distribución de {feature}")
         if log:
-            axes_num[i].set_xscale('log')
-
+            axes_num[i].set_yscale('log')
     for j in range(i + 1, len(axes_num)):
         fig_num.delaxes(axes_num[j])
 
