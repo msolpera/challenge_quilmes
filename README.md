@@ -69,6 +69,8 @@ Se entrena un modelo de Machine Learning para predecir la cantidad de minutos re
 
 Cargar los datos en carpeta `data`  y correr el archivo main.ipynb.
 
+Para nuevas predicciones, cargar en carpeta data 'nuevos_datos.csv' y correr el archivo `predict.py` dentro de src
+
 
 ---
 
