@@ -60,7 +60,8 @@ Se entrena un modelo de Machine Learning para predecir la cantidad de minutos re
 ## Resultados
 
 - Tabla con predicción de minutos recomendados, score normalizado y ranking regional para cada cliente.
-- Análisis interpretativo para el equipo de Nivel de Servicio explicando la utilidad de la herramienta y los insights obtenidos.
+- Análisis interpretativo para el equipo de Nivel de Servicio explicando la utilidad de la herramienta y los insights obtenidos (Power Bi y pdf).
+  
 
 ---
 
@@ -74,29 +75,30 @@ Cargar los datos en carpeta `data`  y correr el archivo main.ipynb.
 ## Estructura del repo
 
 data/ # Carpeta con datos de entrada y salida
-├── predictions/ # Resultados de predicciones generadas
-│ └── predictions.csv # Archivo CSV con las predicciones
-├── processed/ # Datos procesados intermedios
-│ ├── df_clean.csv # Dataset limpio
-│ ├── df_feat.csv # Dataset con features generados
-├── Dataset.csv # Dataset original crudo
-models/ # Modelos entrenados guardados
-├── modelo_catboost.pkl # Modelo CatBoost 
-├── modelo_linear.pkl # Modelo lineal 
-notebooks/ # Jupyter notebooks para exploración y modelado
-├── catboost_info/ # Notebooks o recursos específicos de CatBoost
-├── EDA.ipynb # Notebook de Análisis Exploratorio de Datos
-└── modelling.ipynb # Notebook para entrenamiento y evaluación de modelos
-src/ # Código fuente
-├── pycache/ # Cache de Python (archivos compilados .pyc)
-├── clean.py # Script para limpieza de datos
-├── eda.py # Script para análisis exploratorio
-├── feature_engineering.py# Script para creación de variables (features)
-├── model.py # Script para definir y entrenar modelos
-├── plots.py # Funciones para gráficos y visualizaciones
-├── preprocesing.py # Script para preprocesamiento de datos 
-├── read_data.py # Funciones para carga de datos
-└── utils.py # Funciones utilitarias varias
+
+    ├── predictions/ # Resultados de predicciones generadas
+    │ └── predictions.csv # Archivo CSV con las predicciones
+    ├── processed/ # Datos procesados intermedios
+    │ ├── df_clean.csv # Dataset limpio
+    │ ├── df_feat.csv # Dataset con features generados
+    ├── Dataset.csv # Dataset original crudo
+    models/ # Modelos entrenados guardados
+    ├── modelo_catboost.pkl # Modelo CatBoost 
+    ├── modelo_linear.pkl # Modelo lineal 
+    notebooks/ # Jupyter notebooks para exploración y modelado
+    ├── catboost_info/ # Notebooks o recursos específicos de CatBoost
+    ├── EDA.ipynb # Notebook de Análisis Exploratorio de Datos
+    └── modelling.ipynb # Notebook para entrenamiento y evaluación de modelos
+    src/ # Código fuente
+    ├── pycache/ # Cache de Python (archivos compilados .pyc)
+    ├── clean.py # Script para limpieza de datos
+    ├── eda.py # Script para análisis exploratorio
+    ├── feature_engineering.py# Script para creación de variables (features)
+    ├── model.py # Script para definir y entrenar modelos
+    ├── plots.py # Funciones para gráficos y visualizaciones
+    ├── preprocesing.py # Script para preprocesamiento de datos 
+    ├── read_data.py # Funciones para carga de datos
+    └── utils.py # Funciones utilitarias varias
 
 ## Tecnologías y Librerías
 
@@ -153,6 +155,7 @@ María Sol Pera
 msolpera@gmail.com
 
 ---
+
 
 
 
