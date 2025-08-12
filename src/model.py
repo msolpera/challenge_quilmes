@@ -30,7 +30,7 @@ def split_data(df, fecha_corte_train=202504,fecha_oot=202505):
     return df_train, df_valid, df_test
 
 
-def train_model(X_train, y_train, model_name, preprocessor=None):
+def train_model(X_train, y_train, model_name, version, preprocessor=None):
     """
     Entrena un modelo de regresión lineal o CatBoost.
     """
@@ -44,7 +44,7 @@ def train_model(X_train, y_train, model_name, preprocessor=None):
     elif model_name == 'catboost':
     
         cb = CatBoostRegressor(
-            iterations=424,
+            iterations=500,
             learning_rate=0.05,
             depth=10,
             loss_function='MAE',
@@ -73,7 +73,7 @@ def train_model(X_train, y_train, model_name, preprocessor=None):
 
     # Guardar
     import joblib
-    filename = f"modelo_{model_name}.pkl"
+    filename = f"modelo_{model_name}_{version}.pkl"
     joblib.dump(model, filename)
     print(f"Modelo guardado en {filename}")
 
@@ -81,7 +81,7 @@ def train_model(X_train, y_train, model_name, preprocessor=None):
 
 
 
-def evaluate_model(model, X_test, y_test):
+def evaluate_model(model, X_test, y_test, return_metrics=False):
     """
     Evaluates a trained model using MAE and RMSE (with confidence intervals).
     Also compares it against a DummyRegressor baseline.
@@ -107,9 +107,10 @@ def evaluate_model(model, X_test, y_test):
     # MAE and RMSE using bootstrap
     mae_ci = bootstrap(y_test.values, y_pred, mean_absolute_error)
     rmse_ci = bootstrap(y_test.values, y_pred, lambda y1, y2: root_mean_squared_error(y1, y2))
+    r2_ci = bootstrap(y_test.values, y_pred, lambda y1, y2: r2_score(y1, y2))
 
 
-    print("\n performance on test:")
+    print("\n performance:")
     print("----------------------------------")
     print(" Model Evaluation Summary:")
     print("----------------------------------")
@@ -118,6 +119,9 @@ def evaluate_model(model, X_test, y_test):
 
     print(f"RMSE: {rmse:,.2f} min ")
     print(f"95% Confidence Interval for RMSE: {rmse_ci[0]:,.2f} min – {rmse_ci[1]:,.2f} min\n")
+
+    print(f"R2: {r2:,.2f} min ")
+    print(f"95% Confidence Interval for R2: {r2_ci[0]:,.2f} min – {r2_ci[1]:,.2f} min\n")
 
     dummy = DummyRegressor(strategy="mean")
     dummy.fit(X_test, y_test)
@@ -131,12 +135,16 @@ def evaluate_model(model, X_test, y_test):
 
     improvement_mae = dummy_mae - mae
     improvement_rmse = dummy_rmse - rmse
+    improvement_r2 = dummy_r2 - r2
 
     print("Comparison vs baseline (dum. regressor using mean):")
     print("--------------------------------------------------------")
     print(f" MAE (Dummy): {dummy_mae:,.2f} min -  improvement: {improvement_mae:,.2f} min")
     print(f" RMSE (Dummy): {dummy_rmse:,.2f} min  -  improvement: {improvement_rmse:,.2f} min")
-    return mae, rmse, r2, dummy_mae, dummy_rmse, dummy_r2
+
+
+    if return_metrics:
+        return mae, rmse, r2, dummy_mae, dummy_rmse, dummy_r2
 
 
 
